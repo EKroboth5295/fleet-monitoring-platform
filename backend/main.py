@@ -1,6 +1,22 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
 
 app = FastAPI()
+
+class VehicleUpdate(BaseModel):
+    id: int
+    lat: float
+    lon: float
+    speed: float
+
+@app.post("/update")
+def update_vehicle(vehicle: VehicleUpdate):
+    print(vehicle)
+
+    return {
+        "message": "Vehicle update received",
+        "vehicle": vehicle
+    }
 
 @app.get("/")
 def root():

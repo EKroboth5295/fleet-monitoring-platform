@@ -1,4 +1,5 @@
 import time
+import requests
 
 trucks = [
     {
@@ -127,6 +128,12 @@ while True:
     for truck in trucks:
         truck["lat"] = truck["lat"] + 0.0002
         truck["lon"] = truck["lon"] - 0.0004
+
+        requests.post(
+            "http://127.0.0.1:8000/update",
+            json=truck
+        )
+
         print(truck)
 
     print("-" * 40)   # separator between updates
