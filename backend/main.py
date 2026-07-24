@@ -2,37 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-class VehicleUpdate(BaseModel):
-    id: int
-    lat: float
-    lon: float
-    speed: float
-
-@app.post("/update")
-def update_vehicle(vehicle: VehicleUpdate):
-    print(vehicle)
-
-    return {
-        "message": "Vehicle update received",
-        "vehicle": vehicle
-    }
-
-@app.get("/")
-def root():
-    return {"message": "Fleet Monitoring API"}
-
-@app.get("/vehicles")
-def get_vehicles():
-    vehicles = [
+vehicles = [
     {
         "id": 1,
         "lat": 40.798,
@@ -154,4 +124,41 @@ def get_vehicles():
         "speed": 38
     }
 ]
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class VehicleUpdate(BaseModel):
+    id: int
+    lat: float
+    lon: float
+    speed: float
+
+@app.post("/update")
+def update_vehicle(vehicle: VehicleUpdate):
+    for v in vehicles:
+        if v["id"] == vehicle.id:
+            v["lat"] = vehicle.lat
+            v["lon"] = vehicle.lon
+            v["speed"] = vehicle.speed
+
+            return {
+                "message": "Vehicle updated",
+                "vehicle": v
+            }
+
+    return {"error": "Vehicle not found"}
+
+@app.get("/")
+def root():
+    return {"message": "Fleet Monitoring API"}
+
+@app.get("/vehicles")
+def get_vehicles():
     return vehicles
