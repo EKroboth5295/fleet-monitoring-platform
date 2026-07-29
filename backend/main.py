@@ -8,12 +8,10 @@ app = FastAPI()
 conn = psycopg.connect(
     dbname="fleet_monitoring",
     user="postgres",
-    password="JoejoeDuke@1",
+    password="JoejoeFreddy9321!",
     host="localhost",
     port="5432"
 )
-
-conn.rollback()
 
 cursor = conn.cursor()
 
@@ -48,6 +46,23 @@ def update_vehicle(vehicle: VehicleUpdate):
             vehicle.lon,
             vehicle.speed,
             vehicle.id
+        )
+    )
+
+    if cursor.rowcount == 0:
+        return {"error": "Vehicle not found"}
+
+    cursor.execute(
+        """
+        INSERT INTO vehicle_history
+        (vehicle_id, latitude, longitude, speed)
+        VALUES (%s, %s, %s, %s)
+        """,
+        (
+            vehicle.id,
+            vehicle.lat,
+            vehicle.lon,
+            vehicle.speed
         )
     )
 
