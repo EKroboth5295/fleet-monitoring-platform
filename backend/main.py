@@ -102,3 +102,34 @@ def get_vehicles():
         )
 
     return vehicles
+
+@app.get("/history/{vehicle_id}")
+def get_history(vehicle_id: int):
+    cursor.execute(
+        """
+        SELECT latitude,
+               longitude,
+               speed,
+               timestamp
+        FROM vehicle_history
+        WHERE vehicle_id = %s
+        ORDER BY timestamp
+        """,
+        (vehicle_id,)
+    )
+
+    rows = cursor.fetchall()
+
+    history = []
+
+    for row in rows:
+        history.append(
+            {
+                "lat": row[0],
+                "lon": row[1],
+                "speed": row[2],
+                "timestamp": row[3]
+            }
+        )
+
+    return history
