@@ -3,7 +3,8 @@ import {
   MapContainer,
   TileLayer,
   Marker,
-  Popup
+  Popup,
+  Polyline
 } from "react-leaflet";
 import './App.css';
 
@@ -21,12 +22,23 @@ function App() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [history, setHistory] = useState<any[]>([]);
 
+  const pathCoordinates = history.map(point => [
+  point.lat,
+  point.lon
+]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       fetch("http://127.0.0.1:8000/vehicles")
         .then(response => response.json())
         .then(data => {
           setVehicles(data);
+        });
+      fetch("http://127.0.0.1:8000/history/1")
+        .then(response => response.json())
+        .then(historyData => {
+          console.log("History length:", historyData.length);
+          setHistory(historyData);
         });
     }, 3000);
 
@@ -66,6 +78,8 @@ function App() {
           attribution='&copy; OpenStreetMap contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        <Polyline positions={pathCoordinates} />
 
         {vehicles.map((vehicle) => (
           <Marker
