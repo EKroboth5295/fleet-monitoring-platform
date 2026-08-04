@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -22,14 +22,8 @@ function App() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [histories, setHistories] = useState<Record<number, any[]>>({});
 
-  const pathCoordinates = (histories[1] || []).map(point => [
-  point.lat,
-  point.lon
-]);
-
   useEffect(() => {
   const interval = setInterval(() => {
-  console.log(histories);
   
     fetch("http://127.0.0.1:8000/vehicles")
       .then(response => response.json())
@@ -68,12 +62,19 @@ function App() {
 
   }, []);
 
+  // Temporary for debugging
+  const totalHistoryPoints =
+  Object.values(histories).reduce(
+    (total, history) => total + history.length,
+    0
+  );
+  
   return (
     <div>
       <h1>Fleet Dashboard</h1>
       <p>Real-time Vehicle Monitoring System</p>
 
-      <h2>History points: {(histories[1] || []).length}</h2>
+      <h2>History points: {totalHistoryPoints}</h2>
 
       <h2>Vehicles:</h2>
 
@@ -95,14 +96,12 @@ function App() {
           ]);
 
           return (
-            <>
+            <Fragment key={vehicle.id}>
               <Polyline
-                key={`line-${vehicle.id}`}
                 positions={pathCoordinates}
               />
 
               <Marker
-                key={`marker-${vehicle.id}`}
                 position={[vehicle.lat, vehicle.lon]}
               >
                 <Popup>
@@ -111,7 +110,7 @@ function App() {
                   Speed: {vehicle.speed} mph
                 </Popup>
               </Marker>
-            </>
+            </Fragment>
           );
 
         })}
