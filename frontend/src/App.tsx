@@ -8,6 +8,19 @@ import {
 } from "react-leaflet";
 import './App.css';
 
+const colors = [
+    "red",
+    "blue",
+    "green",
+    "orange",
+    "goldenrod",
+    "purple",
+    "brown",
+    "black",
+    "pink",
+    "teal"
+];
+
 type Vehicle = {
   id: number;
   lat: number;
@@ -22,9 +35,7 @@ function App() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [histories, setHistories] = useState<Record<number, any[]>>({});
 
-  useEffect(() => {
-  const interval = setInterval(() => {
-  
+  const loadFleetData = () => {
     fetch("http://127.0.0.1:8000/vehicles")
       .then(response => response.json())
       .then(data => {
@@ -47,19 +58,14 @@ function App() {
         });
 
       });
-
-  }, 3000);
-
-  return () => clearInterval(interval);
-
-}, []);
+  };
 
   useEffect(() => {
+    loadFleetData();
 
-    fetch("http://127.0.0.1:8000/vehicles")
-      .then(res => res.json())
-      .then(data => setVehicles(data));
+    const interval = setInterval(loadFleetData, 3000);
 
+    return () => clearInterval(interval);
   }, []);
 
   // Temporary for debugging
@@ -95,10 +101,13 @@ function App() {
             point.lon
           ]);
 
+          const color = colors[(vehicle.id - 1) % colors.length];
+
           return (
             <Fragment key={vehicle.id}>
               <Polyline
                 positions={pathCoordinates}
+                pathOptions={{ color }}
               />
 
               <Marker
