@@ -4,7 +4,8 @@ import {
   TileLayer,
   Marker,
   Popup,
-  Polyline
+  Polyline,
+  useMap
 } from "react-leaflet";
 import './App.css';
 
@@ -17,7 +18,7 @@ const colors = [
     "purple",
     "brown",
     "black",
-    "pink",
+    "magenta",
     "teal"
 ];
 
@@ -28,12 +29,35 @@ type Vehicle = {
   speed: number;
 };
 
+function MapController({
+  selectedTruck
+}: {
+  selectedTruck: Vehicle | null;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (selectedTruck) {
+      map.flyTo(
+        [selectedTruck.lat, selectedTruck.lon],
+        map.getZoom(),
+        {
+          duration: 1
+        }
+      );
+    }
+  }, [selectedTruck, map]);
+
+  return null;
+}
+
 function App() {
 
   console.log("APP LOADED");
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [histories, setHistories] = useState<Record<number, any[]>>({});
+  const [selectedTruck, setSelectedTruck] = useState<number | null>(null);
 
   const loadFleetData = () => {
     fetch("http://127.0.0.1:8000/vehicles")
@@ -68,19 +92,52 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Temporary for debugging
   const totalHistoryPoints =
   Object.values(histories).reduce(
     (total, history) => total + history.length,
     0
   );
   
+  const activeTrucks = vehicles.length;
+
+  const averageSpeed =
+    vehicles.length > 0
+      ? (
+          vehicles.reduce((sum, truck) => sum + truck.speed, 0) /
+          vehicles.length
+        ).toFixed(1)
+      : "0";
+
+  const fastestTruck =
+    vehicles.length > 0
+      ? vehicles.reduce(
+          (fastest, truck) =>
+            truck.speed > fastest.speed ? truck : fastest
+        )
+      : null;
+
+  const selectedVehicle =
+    vehicles.find(vehicle => vehicle.id === selectedTruck) || null;
+
   return (
     <div>
       <h1>Fleet Dashboard</h1>
       <p>Real-time Vehicle Monitoring System</p>
 
-      <h2>History points: {totalHistoryPoints}</h2>
+      <h2>Fleet Statistics</h2>
+
+      <p>Active Trucks: {activeTrucks}</p>
+
+      <p>Average Speed: {averageSpeed} mph</p>
+
+      <p>
+        Fastest Truck:
+        {fastestTruck
+          ? ` Truck ${fastestTruck.id} (${fastestTruck.speed} mph)`
+          : " N/A"}
+      </p>
+
+      <p>History Points: {totalHistoryPoints}</p>
 
       <h2>Vehicles:</h2>
 
@@ -93,6 +150,8 @@ function App() {
           attribution='&copy; OpenStreetMap contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        
+        <MapController selectedTruck={selectedVehicle} />
 
         {vehicles.map((vehicle) => {
 
@@ -102,16 +161,28 @@ function App() {
           ]);
 
           const color = colors[(vehicle.id - 1) % colors.length];
+          const isSelected =
+            selectedTruck === null ||
+            selectedTruck === vehicle.id;
 
           return (
             <Fragment key={vehicle.id}>
               <Polyline
                 positions={pathCoordinates}
-                pathOptions={{ color }}
+                pathOptions={{
+                  color,
+                  opacity: isSelected ? 1 : 0.15
+                }}
               />
 
               <Marker
                 position={[vehicle.lat, vehicle.lon]}
+                eventHandlers={{
+                  click: () =>
+                    setSelectedTruck(
+                        selectedTruck === vehicle.id ? null : vehicle.id
+                    )
+                }}
               >
                 <Popup>
                   Truck {vehicle.id}
