@@ -2,9 +2,9 @@ import { Fragment, useEffect, useState } from "react";
 import {
   MapContainer,
   TileLayer,
-  Marker,
   Popup,
   Polyline,
+  CircleMarker,
   useMap
 } from "react-leaflet";
 import './App.css';
@@ -47,6 +47,28 @@ function MapController({
       );
     }
   }, [selectedTruck, map]);
+
+  return null;
+}
+
+function MapClickHandler({
+  setSelectedTruck
+}: {
+  setSelectedTruck: (id: number | null) => void;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    const handleMapClick = () => {
+      setSelectedTruck(null);
+    };
+
+    map.on("click", handleMapClick);
+
+    return () => {
+      map.off("click", handleMapClick);
+    };
+  }, [map, setSelectedTruck]);
 
   return null;
 }
@@ -153,6 +175,10 @@ function App() {
         
         <MapController selectedTruck={selectedVehicle} />
 
+        <MapClickHandler
+          setSelectedTruck={setSelectedTruck}
+        />
+
         {vehicles.map((vehicle) => {
 
           const pathCoordinates = (histories[vehicle.id] || []).map(point => [
@@ -175,13 +201,22 @@ function App() {
                 }}
               />
 
-              <Marker
-                position={[vehicle.lat, vehicle.lon]}
+              <CircleMarker
+                center={[vehicle.lat, vehicle.lon]}
+                radius={8}
+                pathOptions={{
+                  color: color,
+                  fillColor: color,
+                  fillOpacity: 1
+                }}
                 eventHandlers={{
-                  click: () =>
+                  click: (event) => {
+                    event.originalEvent.stopPropagation();
+
                     setSelectedTruck(
-                        selectedTruck === vehicle.id ? null : vehicle.id
-                    )
+                      selectedTruck === vehicle.id ? null : vehicle.id
+                    );
+                  }
                 }}
               >
                 <Popup>
@@ -189,7 +224,7 @@ function App() {
                   <br />
                   Speed: {vehicle.speed} mph
                 </Popup>
-              </Marker>
+              </CircleMarker>
             </Fragment>
           );
 
