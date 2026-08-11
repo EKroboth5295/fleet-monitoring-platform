@@ -146,6 +146,11 @@ trucks = [
     },
 ]
 
+for truck in trucks:
+    truck["stopped"] = False
+    truck["stop_time"] = 0
+    truck["previous_speed"] = truck["speed"]
+    
 MIN_LAT = 40.790
 MAX_LAT = 40.815
 
@@ -160,30 +165,45 @@ while True:
     last_update = now
 
     for truck in trucks:
-        # Slight speed variation
-        truck["speed"] += random.uniform(-0.2, 0.2)
-        truck["speed"] = max(15, min(65, truck["speed"]))
+        if not truck["stopped"] and random.random() < 0.02:
+            truck["stopped"] = True
+            truck["stop_time"] = random.uniform(6, 9)
+            truck["previous_speed"] = truck["speed"]
 
-        # Occasionally make a small turn
-        if random.random() < 0.1: #Small chance every turn
-            truck["heading"] += random.uniform(-10, 10)
-            truck["heading"] %= 360
+        if truck["stopped"]:
+            truck["speed"] = 0
+            truck["stop_time"] -= dt
 
-        meters = truck["speed"] * 0.44704 * dt
+            if truck["stop_time"] <= 0:
+                truck["stopped"] = False
+                truck["stop_time"] = 0
+                truck["speed"] = truck["previous_speed"]
 
-        heading = math.radians(truck["heading"])
+        else:
+            truck["speed"] += random.uniform(-0.2, 0.2)
+            truck["speed"] = max(15, min(65, truck["speed"]))
 
-        north = meters * math.cos(heading)
-        east = meters * math.sin(heading)
+            if random.random() < 0.1:
+                truck["heading"] += random.uniform(-10, 10)
+                truck["heading"] %= 360
 
-        truck["lat"] += north / 111320
-        truck["lon"] += east / (111320 * math.cos(math.radians(truck["lat"])))
+            meters = truck["speed"] * 0.44704 * dt
 
-        if truck["lat"] < MIN_LAT or truck["lat"] > MAX_LAT:
-            truck["heading"] = (180 - truck["heading"]) % 360
+            heading = math.radians(truck["heading"])
 
-        if truck["lon"] < MIN_LON or truck["lon"] > MAX_LON:
-            truck["heading"] = (-truck["heading"]) % 360
+            north = meters * math.cos(heading)
+            east = meters * math.sin(heading)
+
+            truck["lat"] += north / 111320
+            truck["lon"] += east / (
+                111320 * math.cos(math.radians(truck["lat"]))
+            )
+
+            if truck["lat"] < MIN_LAT or truck["lat"] > MAX_LAT:
+                truck["heading"] = (180 - truck["heading"]) % 360
+
+            if truck["lon"] < MIN_LON or truck["lon"] > MAX_LON:
+                truck["heading"] = (-truck["heading"]) % 360
 
         requests.post(
             "http://127.0.0.1:8000/update",

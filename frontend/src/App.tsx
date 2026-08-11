@@ -220,9 +220,15 @@ function App() {
                 }}
               >
                 <Popup>
-                  Truck {vehicle.id}
+                  <strong>Truck {vehicle.id}</strong>
                   <br />
-                  Speed: {vehicle.speed} mph
+                  Speed: {vehicle.speed.toFixed(1)} mph
+                  <br />
+                  Latitude: {vehicle.lat.toFixed(5)}
+                  <br />
+                  Longitude: {vehicle.lon.toFixed(5)}
+                  <br />
+                  History Points: {(histories[vehicle.id] || []).length}
                 </Popup>
               </CircleMarker>
             </Fragment>
