@@ -203,7 +203,8 @@ function App() {
                   positions={pathCoordinates}
                   pathOptions={{
                     color,
-                    opacity: isSelected ? 1 : 0.15
+                    opacity: isSelected ? 1 : 0.15,
+                    weight: selectedTruck === vehicle.id ? 6 : 3
                   }}
                 />
               )}
