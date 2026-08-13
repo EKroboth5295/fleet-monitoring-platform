@@ -80,6 +80,7 @@ function App() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [histories, setHistories] = useState<Record<number, any[]>>({});
   const [selectedTruck, setSelectedTruck] = useState<number | null>(null);
+  const [showRoutes, setShowRoutes] = useState(true);
 
   const loadFleetData = () => {
     fetch("http://127.0.0.1:8000/vehicles")
@@ -163,6 +164,10 @@ function App() {
 
       <h2>Vehicles:</h2>
 
+      <button onClick={() => setShowRoutes(!showRoutes)}>
+        {showRoutes ? "Hide Routes" : "Show Routes"}
+      </button>
+
       <MapContainer
         center={[40.798, -77.860]}
         zoom={14}
@@ -192,14 +197,16 @@ function App() {
             selectedTruck === vehicle.id;
 
           return (
-            <Fragment key={vehicle.id}>
-              <Polyline
-                positions={pathCoordinates}
-                pathOptions={{
-                  color,
-                  opacity: isSelected ? 1 : 0.15
-                }}
-              />
+            <Fragment key={vehicle.id}>              
+              {showRoutes && (
+                <Polyline
+                  positions={pathCoordinates}
+                  pathOptions={{
+                    color,
+                    opacity: isSelected ? 1 : 0.15
+                  }}
+                />
+              )}
 
               <CircleMarker
                 center={[vehicle.lat, vehicle.lon]}
