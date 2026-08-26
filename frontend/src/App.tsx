@@ -27,6 +27,7 @@ type Vehicle = {
   lat: number;
   lon: number;
   speed: number;
+  heading: number;
 };
 
 function MapController({
@@ -237,6 +238,8 @@ function App() {
                   Longitude: {vehicle.lon.toFixed(5)}
                   <br />
                   History Points: {(histories[vehicle.id] || []).length}
+                  <br />
+                  Heading: {vehicle.heading.toFixed(1)}°
                 </Popup>
               </CircleMarker>
             </Fragment>

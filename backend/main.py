@@ -32,6 +32,7 @@ class VehicleUpdate(BaseModel):
     lat: float
     lon: float
     speed: float
+    heading: float
 
 @app.post("/update")
 def update_vehicle(vehicle: VehicleUpdate):
@@ -41,18 +42,21 @@ def update_vehicle(vehicle: VehicleUpdate):
         UPDATE vehicles
         SET latitude = %s,
             longitude = %s,
-            speed = %s
+            speed = %s,
+            heading = %s
         WHERE id = %s
         """,
         (
             vehicle.lat,
             vehicle.lon,
             vehicle.speed,
+            vehicle.heading,
             vehicle.id
         )
     )
 
     if cursor.rowcount == 0:
+        conn.rollback()
         return {"error": "Vehicle not found"}
 
     cursor.execute(
@@ -85,7 +89,7 @@ def get_vehicles():
 
     cursor.execute(
         """
-        SELECT id, latitude, longitude, speed
+        SELECT id, latitude, longitude, speed, heading
         FROM vehicles
         """
     )
@@ -100,7 +104,8 @@ def get_vehicles():
                 "id": row[0],
                 "lat": row[1],
                 "lon": row[2],
-                "speed": row[3]
+                "speed": row[3],
+                "heading": row[4]
             }
         )
 
