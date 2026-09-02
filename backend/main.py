@@ -149,3 +149,77 @@ def get_history(vehicle_id: int):
         )
 
     return history
+
+@app.get("/fleet")
+def get_fleet():
+
+    cursor.execute(
+        """
+        SELECT id, latitude, longitude, speed, heading
+        FROM vehicles
+        ORDER BY id
+        """
+    )
+
+    vehicle_rows = cursor.fetchall()
+
+    vehicles = []
+
+    for row in vehicle_rows:
+        vehicles.append(
+            {
+                "id": row[0],
+                "lat": row[1],
+                "lon": row[2],
+                "speed": row[3],
+                "heading": row[4]
+            }
+        )
+
+    cursor.execute(
+        """
+        SELECT vehicle_id,
+               latitude,
+               longitude,
+               speed,
+               timestamp
+        FROM (
+            SELECT vehicle_id,
+                   latitude,
+                   longitude,
+                   speed,
+                   timestamp,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY vehicle_id
+                       ORDER BY timestamp DESC
+                   ) AS row_number
+            FROM vehicle_history
+        ) AS recent_history
+        WHERE row_number <= 500
+        ORDER BY vehicle_id, timestamp;
+        """
+    )
+
+    history_rows = cursor.fetchall()
+
+    histories = {}
+
+    for row in history_rows:
+        vehicle_id = row[0]
+
+        if vehicle_id not in histories:
+            histories[vehicle_id] = []
+
+        histories[vehicle_id].append(
+            {
+                "lat": row[1],
+                "lon": row[2],
+                "speed": row[3],
+                "timestamp": row[4]
+            }
+        )
+
+    return {
+        "vehicles": vehicles,
+        "histories": histories
+    }

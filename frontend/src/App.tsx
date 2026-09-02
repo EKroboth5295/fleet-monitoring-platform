@@ -84,27 +84,11 @@ function App() {
   const [showRoutes, setShowRoutes] = useState(true);
 
   const loadFleetData = () => {
-    fetch("http://127.0.0.1:8000/vehicles")
+    fetch("http://127.0.0.1:8000/fleet")
       .then(response => response.json())
       .then(data => {
-
-        setVehicles(data);
-
-        data.forEach((vehicle: Vehicle) => {
-
-          fetch(`http://127.0.0.1:8000/history/${vehicle.id}`)
-            .then(response => response.json())
-            .then(historyData => {
-
-              setHistories(prev => ({
-                ...prev,
-                [vehicle.id]: historyData
-              }));
-
-            });
-
-        });
-
+        setVehicles(data.vehicles);
+        setHistories(data.histories);
       });
   };
 
