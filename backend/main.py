@@ -1,4 +1,4 @@
-import psycopg
+from psycopg_pool import ConnectionPool
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -8,15 +8,20 @@ import os
 app = FastAPI()
 load_dotenv()
 
-conn = psycopg.connect(
-    dbname=os.getenv("DB_NAME"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD"),
-    host=os.getenv("DB_HOST"),
-    port=os.getenv("DB_PORT")
+pool = ConnectionPool(
+    conninfo=(
+        f"dbname={os.getenv('DB_NAME')} "
+        f"user={os.getenv('DB_USER')} "
+        f"password={os.getenv('DB_PASSWORD')} "
+        f"host={os.getenv('DB_HOST')} "
+        f"port={os.getenv('DB_PORT')}"
+    ),
+    min_size=1,
+    max_size=10,
+    open=True
 )
 
-cursor = conn.cursor()
+pool.wait()
 
 print("Connected to PostgreSQL!")
 
@@ -37,43 +42,43 @@ class VehicleUpdate(BaseModel):
 @app.post("/update")
 def update_vehicle(vehicle: VehicleUpdate):
 
-    cursor.execute(
-        """
-        UPDATE vehicles
-        SET latitude = %s,
-            longitude = %s,
-            speed = %s,
-            heading = %s
-        WHERE id = %s
-        """,
-        (
-            vehicle.lat,
-            vehicle.lon,
-            vehicle.speed,
-            vehicle.heading,
-            vehicle.id
-        )
-    )
+    with pool.connection() as conn:
+        with conn.cursor() as cursor:
 
-    if cursor.rowcount == 0:
-        conn.rollback()
-        return {"error": "Vehicle not found"}
+            cursor.execute(
+                """
+                UPDATE vehicles
+                SET latitude = %s,
+                    longitude = %s,
+                    speed = %s,
+                    heading = %s
+                WHERE id = %s
+                """,
+                (
+                    vehicle.lat,
+                    vehicle.lon,
+                    vehicle.speed,
+                    vehicle.heading,
+                    vehicle.id
+                )
+            )
 
-    cursor.execute(
-        """
-        INSERT INTO vehicle_history
-        (vehicle_id, latitude, longitude, speed)
-        VALUES (%s, %s, %s, %s)
-        """,
-        (
-            vehicle.id,
-            vehicle.lat,
-            vehicle.lon,
-            vehicle.speed
-        )
-    )
+            if cursor.rowcount == 0:
+                return {"error": "Vehicle not found"}
 
-    conn.commit()
+            cursor.execute(
+                """
+                INSERT INTO vehicle_history
+                (vehicle_id, latitude, longitude, speed)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (
+                    vehicle.id,
+                    vehicle.lat,
+                    vehicle.lon,
+                    vehicle.speed
+                )
+            )
 
     return {
         "message": "Vehicle updated",
@@ -87,14 +92,17 @@ def root():
 @app.get("/vehicles")
 def get_vehicles():
 
-    cursor.execute(
-        """
-        SELECT id, latitude, longitude, speed, heading
-        FROM vehicles
-        """
-    )
+    with pool.connection() as conn:
+        with conn.cursor() as cursor:
 
-    rows = cursor.fetchall()
+            cursor.execute(
+                """
+                SELECT id, latitude, longitude, speed, heading
+                FROM vehicles
+                """
+            )
+
+            rows = cursor.fetchall()
 
     vehicles = []
 
@@ -113,28 +121,32 @@ def get_vehicles():
 
 @app.get("/history/{vehicle_id}")
 def get_history(vehicle_id: int):
-    cursor.execute(
-        """
-        SELECT latitude,
-            longitude,
-            speed,
-            timestamp
-        FROM (
-            SELECT latitude,
-                longitude,
-                speed,
-                timestamp
-            FROM vehicle_history
-            WHERE vehicle_id = %s
-            ORDER BY timestamp DESC
-            LIMIT 500
-        ) AS recent_history
-        ORDER BY timestamp;
-        """,
-        (vehicle_id,)
-    )
 
-    rows = cursor.fetchall()
+    with pool.connection() as conn:
+        with conn.cursor() as cursor:
+
+            cursor.execute(
+                """
+                SELECT latitude,
+                    longitude,
+                    speed,
+                    timestamp
+                FROM (
+                    SELECT latitude,
+                        longitude,
+                        speed,
+                        timestamp
+                    FROM vehicle_history
+                    WHERE vehicle_id = %s
+                    ORDER BY timestamp DESC
+                    LIMIT 500
+                ) AS recent_history
+                ORDER BY timestamp;
+                """,
+                (vehicle_id,)
+            )
+
+            rows = cursor.fetchall()
 
     history = []
 
@@ -153,54 +165,57 @@ def get_history(vehicle_id: int):
 @app.get("/fleet")
 def get_fleet():
 
-    cursor.execute(
-        """
-        SELECT id, latitude, longitude, speed, heading
-        FROM vehicles
-        ORDER BY id
-        """
-    )
+    with pool.connection() as conn:
+        with conn.cursor() as cursor:
 
-    vehicle_rows = cursor.fetchall()
+            cursor.execute(
+                """
+                SELECT id, latitude, longitude, speed, heading
+                FROM vehicles
+                ORDER BY id
+                """
+            )
 
-    vehicles = []
+            vehicle_rows = cursor.fetchall()
 
-    for row in vehicle_rows:
-        vehicles.append(
-            {
-                "id": row[0],
-                "lat": row[1],
-                "lon": row[2],
-                "speed": row[3],
-                "heading": row[4]
-            }
-        )
+            vehicles = []
 
-    cursor.execute(
-        """
-        SELECT vehicle_id,
-               latitude,
-               longitude,
-               speed,
-               timestamp
-        FROM (
-            SELECT vehicle_id,
-                   latitude,
-                   longitude,
-                   speed,
-                   timestamp,
-                   ROW_NUMBER() OVER (
-                       PARTITION BY vehicle_id
-                       ORDER BY timestamp DESC
-                   ) AS row_number
-            FROM vehicle_history
-        ) AS recent_history
-        WHERE row_number <= 500
-        ORDER BY vehicle_id, timestamp;
-        """
-    )
+            for row in vehicle_rows:
+                vehicles.append(
+                    {
+                        "id": row[0],
+                        "lat": row[1],
+                        "lon": row[2],
+                        "speed": row[3],
+                        "heading": row[4]
+                    }
+                )
 
-    history_rows = cursor.fetchall()
+            cursor.execute(
+                """
+                SELECT vehicle_id,
+                       latitude,
+                       longitude,
+                       speed,
+                       timestamp
+                FROM (
+                    SELECT vehicle_id,
+                           latitude,
+                           longitude,
+                           speed,
+                           timestamp,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY vehicle_id
+                               ORDER BY timestamp DESC
+                           ) AS row_number
+                    FROM vehicle_history
+                ) AS recent_history
+                WHERE row_number <= 500
+                ORDER BY vehicle_id, timestamp;
+                """
+            )
+
+            history_rows = cursor.fetchall()
 
     histories = {}
 
