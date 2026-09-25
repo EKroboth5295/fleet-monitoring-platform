@@ -30,6 +30,13 @@ type Vehicle = {
   heading: number;
 };
 
+type HistoryPoint = {
+    lat: number;
+    lon: number;
+    speed: number;
+    timestamp: string;
+};
+
 function MapController({
   selectedTruck
 }: {
@@ -76,19 +83,26 @@ function MapClickHandler({
 
 function App() {
 
-  console.log("APP LOADED");
-
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [histories, setHistories] = useState<Record<number, any[]>>({});
+  const [histories, setHistories] = useState<Record<number, HistoryPoint[]>>({});
   const [selectedTruck, setSelectedTruck] = useState<number | null>(null);
   const [showRoutes, setShowRoutes] = useState(true);
 
   const loadFleetData = () => {
     fetch("http://127.0.0.1:8000/fleet")
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Failed to load fleet data");
+        }
+
+        return response.json();
+      })
       .then(data => {
         setVehicles(data.vehicles);
         setHistories(data.histories);
+      })
+      .catch(error => {
+        console.error("Error loading fleet data:", error);
       });
   };
 
@@ -171,10 +185,11 @@ function App() {
 
         {vehicles.map((vehicle) => {
 
-          const pathCoordinates = (histories[vehicle.id] || []).map(point => [
-            point.lat,
-            point.lon
-          ]);
+          const pathCoordinates: [number, number][] =
+            (histories[vehicle.id] || []).map(point => [
+              point.lat,
+              point.lon
+            ]);
 
           const color = colors[(vehicle.id - 1) % colors.length];
           const isSelected =
