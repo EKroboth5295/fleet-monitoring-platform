@@ -119,7 +119,7 @@ function App() {
     (total, history) => total + history.length,
     0
   );
-  
+
   const activeTrucks = vehicles.length;
 
   const averageSpeed =
@@ -146,20 +146,33 @@ function App() {
       <h1>Fleet Dashboard</h1>
       <p>Real-time Vehicle Monitoring System</p>
 
-      <h2>Fleet Statistics</h2>
+      <div className="stats-grid">
 
-      <p>Active Trucks: {activeTrucks}</p>
+        <div className="stat-card">
+          <h3>Active Trucks</h3>
+          <p>{activeTrucks}</p>
+        </div>
 
-      <p>Average Speed: {averageSpeed} mph</p>
+        <div className="stat-card">
+          <h3>Average Speed</h3>
+          <p>{averageSpeed} mph</p>
+        </div>
 
-      <p>
-        Fastest Truck:
-        {fastestTruck
-          ? ` Truck ${fastestTruck.id} (${fastestTruck.speed} mph)`
-          : " N/A"}
-      </p>
+        <div className="stat-card">
+          <h3>Fastest Truck</h3>
+          <p>
+            {fastestTruck
+              ? `Truck ${fastestTruck.id} (${fastestTruck.speed.toFixed(1)} mph)`
+              : "N/A"}
+          </p>
+        </div>
 
-      <p>History Points: {totalHistoryPoints}</p>
+        <div className="stat-card">
+          <h3>History Points</h3>
+          <p>{totalHistoryPoints}</p>
+        </div>
+
+      </div>
 
       <h2>Vehicles:</h2>
 
