@@ -180,6 +180,48 @@ function App() {
         {showRoutes ? "Hide Routes" : "Show Routes"}
       </button>
 
+      <div className="vehicle-panel">
+
+        <h2>Selected Vehicle</h2>
+        <div>
+          {selectedVehicle ? (
+            <>
+              <h3>Truck {selectedVehicle.id}</h3>
+              <div className="vehicle-card">
+                <p>Speed: {selectedVehicle?.speed}</p>
+              </div>
+
+              <div className="vehicle-card">
+                <p>Heading: {selectedVehicle?.heading}</p>
+              </div>
+
+              <div className="vehicle-card">
+                <p>Latitude: {selectedVehicle?.lat}</p>
+              </div>
+
+              <div className="vehicle-card">
+                <p>Longitude: {selectedVehicle?.lon}</p>
+              </div>
+
+              <div className="vehicle-card">
+                <p>
+                  History: {(histories[selectedVehicle.id] || []).length}
+                </p>
+              </div>
+              <button onClick={() => setSelectedTruck(null)}>
+                Clear Selection
+              </button>
+            </>
+          ) : (
+            <div>
+              <p>No vehicle selected.</p>
+              <p>Click a vehicle on the map to inspect it.</p>
+            </div>
+          )}
+        </div>
+      
+      </div>
+
       <MapContainer
         center={[40.798, -77.860]}
         zoom={14}
