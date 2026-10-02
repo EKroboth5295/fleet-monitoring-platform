@@ -218,6 +218,10 @@
   font-weight: bold;
 }
 
+.vehicles-section {
+  margin-bottom: 30px;
+}
+
 .vehicle-panel {
   display: grid;
   grid-template-columns: 1fr;
@@ -231,11 +235,26 @@
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
 }
 
-.vehicle-card h3 {
-  margin: 0 0 6px;
-}
-
 .vehicle-card p {
   margin: 0;
   font-size: 16px;
+}
+
+.vehicle-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.vehicle-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .vehicle-cards {
+    grid-template-columns: 1fr;
+  }
 }

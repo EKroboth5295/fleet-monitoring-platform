@@ -171,14 +171,96 @@ function App() {
           <h3>History Points</h3>
           <p>{totalHistoryPoints}</p>
         </div>
-
       </div>
 
-      <h2>Vehicles:</h2>
+      <div className="vehicles-section">
+        <h2>Vehicles:</h2>
 
-      <button onClick={() => setShowRoutes(!showRoutes)}>
-        {showRoutes ? "Hide Routes" : "Show Routes"}
-      </button>
+        <button onClick={() => setShowRoutes(!showRoutes)}>
+          {showRoutes ? "Hide Routes" : "Show Routes"}
+        </button>
+
+        <MapContainer
+          center={[40.798, -77.860]}
+          zoom={14}
+          style={{ height: "500px", width: "100%" }}
+        >
+          <TileLayer
+            attribution='&copy; OpenStreetMap contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          
+          <MapController selectedTruck={selectedVehicle} />
+
+          <MapClickHandler
+            setSelectedTruck={setSelectedTruck}
+          />
+
+          {vehicles.map((vehicle) => {
+
+            const pathCoordinates: [number, number][] =
+              (histories[vehicle.id] || []).map(point => [
+                point.lat,
+                point.lon
+              ]);
+
+            const color = colors[(vehicle.id - 1) % colors.length];
+            const isSelected =
+              selectedTruck === null ||
+              selectedTruck === vehicle.id;
+
+            return (
+              <Fragment key={vehicle.id}>              
+                {showRoutes && (
+                  <Polyline
+                    positions={pathCoordinates}
+                    pathOptions={{
+                      color,
+                      opacity: isSelected ? 1 : 0.15,
+                      weight: selectedTruck === vehicle.id ? 6 : 3
+                    }}
+                  />
+                )}
+
+                <CircleMarker
+                  center={[vehicle.lat, vehicle.lon]}
+                  radius={8}
+                  pathOptions={{
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 1
+                  }}
+                  eventHandlers={{
+                    click: (event) => {
+                      event.originalEvent.stopPropagation();
+
+                      setSelectedTruck(
+                        selectedTruck === vehicle.id ? null : vehicle.id
+                      );
+                    }
+                  }}
+                >
+                  <Popup>
+                    <strong>Truck {vehicle.id}</strong>
+                    <br />
+                    Speed: {vehicle.speed.toFixed(1)} mph
+                    <br />
+                    Latitude: {vehicle.lat.toFixed(5)}
+                    <br />
+                    Longitude: {vehicle.lon.toFixed(5)}
+                    <br />
+                    History Points: {(histories[vehicle.id] || []).length}
+                    <br />
+                    Heading: {vehicle.heading.toFixed(1)}°
+                  </Popup>
+                </CircleMarker>
+              </Fragment>
+            );
+
+          })}
+
+        </MapContainer>
+      </div>
 
       <div className="vehicle-panel">
 
@@ -187,27 +269,34 @@ function App() {
           {selectedVehicle ? (
             <>
               <h3>Truck {selectedVehicle.id}</h3>
-              <div className="vehicle-card">
-                <p>Speed: {selectedVehicle?.speed}</p>
+              
+              <div className="vehicle-cards">
+                <div className="vehicle-card">
+                  <p className="vehicle-label">Speed</p>
+                  <p>{selectedVehicle.speed.toFixed(1)} mph</p>
+                </div>
+
+                <div className="vehicle-card">
+                  <p className="vehicle-label">Heading</p>
+                  <p>{selectedVehicle.heading.toFixed(1)}°</p>
+                </div>
+
+                <div className="vehicle-card">
+                  <p className="vehicle-label">Latitude</p>
+                  <p>{selectedVehicle.lat.toFixed(5)}</p>
+                </div>
+
+                <div className="vehicle-card">
+                  <p className="vehicle-label">Longitude</p>
+                  <p>{selectedVehicle.lon.toFixed(5)}</p>
+                </div>
+
+                <div className="vehicle-card">
+                  <p className="vehicle-label">History</p>
+                  <p>{(histories[selectedVehicle.id] || []).length}</p>
+                </div>
               </div>
 
-              <div className="vehicle-card">
-                <p>Heading: {selectedVehicle?.heading}</p>
-              </div>
-
-              <div className="vehicle-card">
-                <p>Latitude: {selectedVehicle?.lat}</p>
-              </div>
-
-              <div className="vehicle-card">
-                <p>Longitude: {selectedVehicle?.lon}</p>
-              </div>
-
-              <div className="vehicle-card">
-                <p>
-                  History: {(histories[selectedVehicle.id] || []).length}
-                </p>
-              </div>
               <button onClick={() => setSelectedTruck(null)}>
                 Clear Selection
               </button>
@@ -221,87 +310,6 @@ function App() {
         </div>
       
       </div>
-
-      <MapContainer
-        center={[40.798, -77.860]}
-        zoom={14}
-        style={{ height: "500px", width: "100%" }}
-      >
-        <TileLayer
-          attribution='&copy; OpenStreetMap contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        <MapController selectedTruck={selectedVehicle} />
-
-        <MapClickHandler
-          setSelectedTruck={setSelectedTruck}
-        />
-
-        {vehicles.map((vehicle) => {
-
-          const pathCoordinates: [number, number][] =
-            (histories[vehicle.id] || []).map(point => [
-              point.lat,
-              point.lon
-            ]);
-
-          const color = colors[(vehicle.id - 1) % colors.length];
-          const isSelected =
-            selectedTruck === null ||
-            selectedTruck === vehicle.id;
-
-          return (
-            <Fragment key={vehicle.id}>              
-              {showRoutes && (
-                <Polyline
-                  positions={pathCoordinates}
-                  pathOptions={{
-                    color,
-                    opacity: isSelected ? 1 : 0.15,
-                    weight: selectedTruck === vehicle.id ? 6 : 3
-                  }}
-                />
-              )}
-
-              <CircleMarker
-                center={[vehicle.lat, vehicle.lon]}
-                radius={8}
-                pathOptions={{
-                  color: color,
-                  fillColor: color,
-                  fillOpacity: 1
-                }}
-                eventHandlers={{
-                  click: (event) => {
-                    event.originalEvent.stopPropagation();
-
-                    setSelectedTruck(
-                      selectedTruck === vehicle.id ? null : vehicle.id
-                    );
-                  }
-                }}
-              >
-                <Popup>
-                  <strong>Truck {vehicle.id}</strong>
-                  <br />
-                  Speed: {vehicle.speed.toFixed(1)} mph
-                  <br />
-                  Latitude: {vehicle.lat.toFixed(5)}
-                  <br />
-                  Longitude: {vehicle.lon.toFixed(5)}
-                  <br />
-                  History Points: {(histories[vehicle.id] || []).length}
-                  <br />
-                  Heading: {vehicle.heading.toFixed(1)}°
-                </Popup>
-              </CircleMarker>
-            </Fragment>
-          );
-
-        })}
-
-      </MapContainer>
 
     </div>
   );
