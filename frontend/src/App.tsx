@@ -87,6 +87,8 @@ function App() {
   const [histories, setHistories] = useState<Record<number, HistoryPoint[]>>({});
   const [selectedTruck, setSelectedTruck] = useState<number | null>(null);
   const [showRoutes, setShowRoutes] = useState(true);
+  const [searchText, setSearchText] = useState("");
+
 
   const loadFleetData = () => {
     fetch("http://127.0.0.1:8000/fleet")
@@ -138,6 +140,10 @@ function App() {
         )
       : null;
 
+  const filteredVehicles = vehicles.filter((vehicle) => {
+    return !searchText || vehicle.id.toString() === searchText;
+  });
+
   const selectedVehicle =
     vehicles.find(vehicle => vehicle.id === selectedTruck) || null;
 
@@ -175,7 +181,14 @@ function App() {
 
       <div className="vehicles-section">
         <h2>Vehicles:</h2>
-
+        
+        <input
+          type="search"
+          placeholder="Search Vehicle"
+          value={searchText}
+          onChange={(event) => setSearchText(event.target.value)}
+        />
+      
         <button onClick={() => setShowRoutes(!showRoutes)}>
           {showRoutes ? "Hide Routes" : "Show Routes"}
         </button>
@@ -196,7 +209,7 @@ function App() {
             setSelectedTruck={setSelectedTruck}
           />
 
-          {vehicles.map((vehicle) => {
+          {filteredVehicles.map((vehicle) => {
 
             const pathCoordinates: [number, number][] =
               (histories[vehicle.id] || []).map(point => [
