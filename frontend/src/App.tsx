@@ -265,6 +265,8 @@ function App() {
                     History Points: {(histories[vehicle.id] || []).length}
                     <br />
                     Heading: {vehicle.heading.toFixed(1)}°
+                    <br />
+                    Status: {vehicle.speed > 0 ? "Moving" : "Stopped"}
                   </Popup>
                 </CircleMarker>
               </Fragment>
@@ -307,6 +309,11 @@ function App() {
                 <div className="vehicle-card">
                   <p className="vehicle-label">History</p>
                   <p>{(histories[selectedVehicle.id] || []).length}</p>
+                </div>
+
+                <div className="vehicle-card">
+                  <p className="vehicle-label">Status</p>
+                  <p>{selectedVehicle.speed > 0 ? "Moving" : "Stopped"}</p>
                 </div>
               </div>
 

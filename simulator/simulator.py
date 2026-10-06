@@ -207,7 +207,7 @@ while True:
     for truck in trucks:
         if not truck["stopped"] and random.random() < 0.02:
             truck["stopped"] = True
-            truck["stop_time"] = random.uniform(6, 9)
+            truck["stop_time"] = random.uniform(15, 25)
             truck["previous_speed"] = truck["speed"]
 
         if truck["stopped"]:
