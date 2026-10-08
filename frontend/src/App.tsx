@@ -266,7 +266,10 @@ function App() {
                     <br />
                     Heading: {vehicle.heading.toFixed(1)}°
                     <br />
-                    Status: {vehicle.speed > 0 ? "Moving" : "Stopped"}
+                    Status:{" "}
+                    <span className={vehicle.speed > 0 ? "status-moving" : "status-stopped"}>
+                      {vehicle.speed > 0 ? "Moving" : "Stopped"}
+                    </span>
                   </Popup>
                 </CircleMarker>
               </Fragment>
@@ -313,7 +316,8 @@ function App() {
 
                 <div className="vehicle-card">
                   <p className="vehicle-label">Status</p>
-                  <p>{selectedVehicle.speed > 0 ? "Moving" : "Stopped"}</p>
+                  <p className={selectedVehicle.speed > 0 ? "status-moving" : "status-stopped"}>
+                    {selectedVehicle.speed > 0 ? "Moving" : "Stopped"}</p>
                 </div>
               </div>
 

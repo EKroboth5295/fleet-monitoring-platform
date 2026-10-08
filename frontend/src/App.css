@@ -258,3 +258,14 @@
     grid-template-columns: 1fr;
   }
 }
+
+.status-moving {
+  color: green;
+  font-weight: bold;
+
+}
+
+.status-stopped {
+  color: red;
+  font-weight: bold;
+}
