@@ -146,7 +146,7 @@ function App() {
 
   const selectedVehicle =
     vehicles.find(vehicle => vehicle.id === selectedTruck) || null;
-
+  
   return (
     <div>
       <h1>Fleet Dashboard</h1>
@@ -192,6 +192,22 @@ function App() {
         <button onClick={() => setShowRoutes(!showRoutes)}>
           {showRoutes ? "Hide Routes" : "Show Routes"}
         </button>
+
+        <div className="vehicle-list">
+          {filteredVehicles.map((vehicle) => (
+            <div
+              key={vehicle.id}
+              className="vehicle-list-trucks"
+              onClick={() => setSelectedTruck(vehicle.id)}
+            >
+              <strong>Truck {vehicle.id}</strong>
+              <div>{vehicle.speed.toFixed(1)} mph</div>
+              <span className={vehicle.speed > 0 ? "status-moving" : "status-stopped"}>
+                {vehicle.speed > 0 ? "Moving" : "Stopped"}
+              </span>
+            </div>
+          ))}
+        </div>
 
         <MapContainer
           center={[40.798, -77.860]}
