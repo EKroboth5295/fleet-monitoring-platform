@@ -37,6 +37,13 @@ type HistoryPoint = {
     timestamp: string;
 };
 
+type Alert = {
+  vehicle_id: number;
+  speed: number;
+  speed_limit: number;
+  message: string;
+};
+
 function MapController({
   selectedTruck
 }: {
@@ -88,6 +95,7 @@ function App() {
   const [selectedTruck, setSelectedTruck] = useState<number | null>(null);
   const [showRoutes, setShowRoutes] = useState(true);
   const [searchText, setSearchText] = useState("");
+  const [alerts, setAlerts] = useState<Alert[]>([]);
 
 
   const loadFleetData = () => {
@@ -108,10 +116,31 @@ function App() {
       });
   };
 
+  const loadAlerts = () => {
+    fetch("http://127.0.0.1:8000/alerts")
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Failed to load alerts");
+        }
+
+        return response.json();
+      })
+      .then(data => {
+        setAlerts(data.alerts);
+      })
+      .catch(error => {
+        console.error("Error loading alerts:", error);
+      });
+  };
+
   useEffect(() => {
     loadFleetData();
+    loadAlerts();
 
-    const interval = setInterval(loadFleetData, 3000);
+    const interval = setInterval(() => {
+      loadFleetData();
+      loadAlerts();
+    }, 3000);
 
     return () => clearInterval(interval);
   }, []);
@@ -177,6 +206,24 @@ function App() {
           <h3>History Points</h3>
           <p>{totalHistoryPoints}</p>
         </div>
+      </div>
+
+      <div className="alerts-section">
+        <h2>Alerts ({alerts.length})</h2>
+
+        {alerts.length === 0 ? (
+          <p>No active alerts. All trucks are within the speed limit.</p>
+        ) : (
+          <div className="alerts-list">
+            {alerts.map(alert => (
+              <div className="alert-card" key={alert.vehicle_id}>
+                <strong>{alert.message}</strong>
+                <p>Current speed: {alert.speed.toFixed(1)} mph</p>
+                <p>Speed limit: {alert.speed_limit} mph</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="vehicles-section">

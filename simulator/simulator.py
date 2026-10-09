@@ -71,7 +71,7 @@ trucks = [
         "id": 8,
         "lat": 40.795,
         "lon": -77.863,
-        "speed": 54,
+        "speed": 70,
         "heading": 340,
         "turn_probability": 0.12,
         "speed_variation": 0.35
@@ -224,7 +224,7 @@ while True:
                 -truck["speed_variation"],
                 truck["speed_variation"]
             )
-            truck["speed"] = max(15, min(65, truck["speed"]))
+            truck["speed"] = max(15, min(75, truck["speed"]))
 
             if random.random() < truck["turn_probability"]:
                 truck["heading"] += random.uniform(-10, 10)

@@ -7,6 +7,7 @@ import os
 
 app = FastAPI()
 load_dotenv()
+SPEED_LIMIT = 65
 
 pool = ConnectionPool(
     conninfo=(
@@ -238,3 +239,40 @@ def get_fleet():
         "vehicles": vehicles,
         "histories": histories
     }
+
+@app.get("/alerts")
+def get_alerts():
+
+    with pool.connection() as conn:
+        with conn.cursor() as cursor:
+
+            cursor.execute(
+                """
+                SELECT id, speed
+                FROM vehicles
+                WHERE speed > %s
+                ORDER BY speed DESC
+                """,
+                (SPEED_LIMIT,)
+            )
+
+            rows = cursor.fetchall()
+
+    alerts = []
+
+    for row in rows:
+        vehicle_id = row[0]
+        speed = float(row[1])
+
+        alerts.append(
+            {
+                "vehicle_id": vehicle_id,
+                "speed": speed,
+                "speed_limit": SPEED_LIMIT,
+                "message": (
+                    f"Truck {vehicle_id} is exceeding the speed limit"
+                )
+            }
+        )
+
+    return {"alerts": alerts}
