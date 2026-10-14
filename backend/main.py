@@ -8,6 +8,7 @@ import os
 app = FastAPI()
 load_dotenv()
 SPEED_LIMIT = 65
+STOPPED_LIMIT_SECONDS = 60
 
 pool = ConnectionPool(
     conninfo=(
@@ -240,12 +241,14 @@ def get_fleet():
         "histories": histories
     }
 
+
 @app.get("/alerts")
 def get_alerts():
 
     with pool.connection() as conn:
         with conn.cursor() as cursor:
 
+            # Find trucks exceeding the speed limit.
             cursor.execute(
                 """
                 SELECT id, speed
@@ -256,21 +259,82 @@ def get_alerts():
                 (SPEED_LIMIT,)
             )
 
-            rows = cursor.fetchall()
+            overspeed_rows = cursor.fetchall()
+
+            # Find the start of each truck's current stopped period.
+            cursor.execute(
+                """
+                WITH latest_moving AS (
+                    SELECT vehicle_id,
+                           MAX(timestamp) AS last_moving_at
+                    FROM vehicle_history
+                    WHERE speed > 0
+                    GROUP BY vehicle_id
+                ),
+                current_stops AS (
+                    SELECT v.id AS vehicle_id,
+                           MIN(h.timestamp) AS stopped_since
+                    FROM vehicles v
+                    JOIN vehicle_history h
+                      ON h.vehicle_id = v.id
+                     AND h.speed <= 0
+                    LEFT JOIN latest_moving lm
+                      ON lm.vehicle_id = v.id
+                    WHERE v.speed <= 0
+                      AND (
+                          lm.last_moving_at IS NULL
+                          OR h.timestamp > lm.last_moving_at
+                      )
+                    GROUP BY v.id
+                )
+                SELECT vehicle_id,
+                       EXTRACT(
+                           EPOCH FROM (
+                               CURRENT_TIMESTAMP - stopped_since
+                           )
+                       ) AS stopped_seconds
+                FROM current_stops
+                WHERE CURRENT_TIMESTAMP - stopped_since
+                      >= (%s * INTERVAL '1 second')
+                ORDER BY stopped_seconds DESC
+                """,
+                (STOPPED_LIMIT_SECONDS,)
+            )
+
+            stopped_rows = cursor.fetchall()
 
     alerts = []
 
-    for row in rows:
+    # Build overspeed alerts.
+    for row in overspeed_rows:
         vehicle_id = row[0]
         speed = float(row[1])
 
         alerts.append(
             {
+                "type": "overspeed",
                 "vehicle_id": vehicle_id,
                 "speed": speed,
                 "speed_limit": SPEED_LIMIT,
                 "message": (
                     f"Truck {vehicle_id} is exceeding the speed limit"
+                )
+            }
+        )
+
+    # Build stopped-too-long alerts.
+    for row in stopped_rows:
+        vehicle_id = row[0]
+        stopped_seconds = int(row[1])
+
+        alerts.append(
+            {
+                "type": "stopped",
+                "vehicle_id": vehicle_id,
+                "stopped_seconds": stopped_seconds,
+                "message": (
+                    f"Truck {vehicle_id} has been stopped "
+                    f"for {stopped_seconds} seconds"
                 )
             }
         )

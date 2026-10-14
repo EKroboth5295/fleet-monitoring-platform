@@ -38,9 +38,11 @@ type HistoryPoint = {
 };
 
 type Alert = {
+  type: "overspeed" | "stopped";
   vehicle_id: number;
-  speed: number;
-  speed_limit: number;
+  speed?: number;
+  speed_limit?: number;
+  stopped_seconds?: number;
   message: string;
 };
 
@@ -212,14 +214,30 @@ function App() {
         <h2>Alerts ({alerts.length})</h2>
 
         {alerts.length === 0 ? (
-          <p>No active alerts. All trucks are within the speed limit.</p>
+          <p>No active alerts. All trucks are within their limits.</p>
         ) : (
           <div className="alerts-list">
-            {alerts.map(alert => (
-              <div className="alert-card" key={alert.vehicle_id}>
+            {alerts.map((alert, index) => (
+              <div
+                className="alert-card"
+                key={`${alert.type}-${alert.vehicle_id}`}
+              >
                 <strong>{alert.message}</strong>
-                <p>Current speed: {alert.speed.toFixed(1)} mph</p>
-                <p>Speed limit: {alert.speed_limit} mph</p>
+
+                {alert.type === "overspeed" ? (
+                  <>
+                    <p>
+                      Current speed: {alert.speed?.toFixed(1)} mph
+                    </p>
+                    <p>
+                      Speed limit: {alert.speed_limit} mph
+                    </p>
+                  </>
+                ) : (
+                  <p>
+                    Stopped for: {alert.stopped_seconds} seconds
+                  </p>
+                )}
               </div>
             ))}
           </div>
