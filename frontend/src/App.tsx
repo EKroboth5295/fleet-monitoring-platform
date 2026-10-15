@@ -38,11 +38,13 @@ type HistoryPoint = {
 };
 
 type Alert = {
-  type: "overspeed" | "stopped";
+  type: "overspeed" | "stopped" | "geofence";
   vehicle_id: number;
   speed?: number;
   speed_limit?: number;
   stopped_seconds?: number;
+  latitude?: number;
+  longitude?: number;
   message: string;
 };
 
@@ -226,17 +228,16 @@ function App() {
 
                 {alert.type === "overspeed" ? (
                   <>
-                    <p>
-                      Current speed: {alert.speed?.toFixed(1)} mph
-                    </p>
-                    <p>
-                      Speed limit: {alert.speed_limit} mph
-                    </p>
+                    <p>Current speed: {alert.speed?.toFixed(1)} mph</p>
+                    <p>Speed limit: {alert.speed_limit} mph</p>
                   </>
+                ) : alert.type === "stopped" ? (
+                  <p>Stopped for: {alert.stopped_seconds} seconds</p>
                 ) : (
-                  <p>
-                    Stopped for: {alert.stopped_seconds} seconds
-                  </p>
+                  <>
+                    <p>Latitude: {alert.latitude?.toFixed(5)}</p>
+                    <p>Longitude: {alert.longitude?.toFixed(5)}</p>
+                  </>
                 )}
               </div>
             ))}

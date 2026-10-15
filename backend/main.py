@@ -10,6 +10,11 @@ load_dotenv()
 SPEED_LIMIT = 65
 STOPPED_LIMIT_SECONDS = 60
 
+GEOFENCE_MIN_LAT = 40.792
+GEOFENCE_MAX_LAT = 40.813
+GEOFENCE_MIN_LON = -77.868
+GEOFENCE_MAX_LON = -77.857
+
 pool = ConnectionPool(
     conninfo=(
         f"dbname={os.getenv('DB_NAME')} "
@@ -248,7 +253,6 @@ def get_alerts():
     with pool.connection() as conn:
         with conn.cursor() as cursor:
 
-            # Find trucks exceeding the speed limit.
             cursor.execute(
                 """
                 SELECT id, speed
@@ -261,7 +265,6 @@ def get_alerts():
 
             overspeed_rows = cursor.fetchall()
 
-            # Find the start of each truck's current stopped period.
             cursor.execute(
                 """
                 WITH latest_moving AS (
@@ -302,10 +305,29 @@ def get_alerts():
             )
 
             stopped_rows = cursor.fetchall()
+    
+            cursor.execute(
+                """
+                SELECT id, latitude, longitude
+                FROM vehicles
+                WHERE latitude < %s
+                   OR latitude > %s
+                   OR longitude < %s
+                   OR longitude > %s
+                ORDER BY id
+                """,
+                (
+                    GEOFENCE_MIN_LAT,
+                    GEOFENCE_MAX_LAT,
+                    GEOFENCE_MIN_LON,
+                    GEOFENCE_MAX_LON
+                )
+            )
+
+            geofence_rows = cursor.fetchall()
 
     alerts = []
 
-    # Build overspeed alerts.
     for row in overspeed_rows:
         vehicle_id = row[0]
         speed = float(row[1])
@@ -322,7 +344,6 @@ def get_alerts():
             }
         )
 
-    # Build stopped-too-long alerts.
     for row in stopped_rows:
         vehicle_id = row[0]
         stopped_seconds = int(row[1])
@@ -338,5 +359,24 @@ def get_alerts():
                 )
             }
         )
+
+    for row in geofence_rows:
+        vehicle_id = row[0]
+        latitude = float(row[1])
+        longitude = float(row[2])
+
+        alerts.append(
+            {
+                "type": "geofence",
+                "vehicle_id": vehicle_id,
+                "latitude": latitude,
+                "longitude": longitude,
+                "message": (
+                    f"Truck {vehicle_id} is outside "
+                    "the permitted geofence"
+                )
+            }
+        )
+
 
     return {"alerts": alerts}
