@@ -205,9 +205,14 @@ while True:
     last_update = now
 
     for truck in trucks:
-        if not truck["stopped"] and random.random() < 0.02:
+        if not truck["stopped"] and random.random() < 0.005:
             truck["stopped"] = True
-            truck["stop_time"] = random.uniform(15, 25)
+
+            if random.random() < 0.15:
+                truck["stop_time"] = random.uniform(65, 90)
+            else:
+                truck["stop_time"] = random.uniform(15, 25)
+
             truck["previous_speed"] = truck["speed"]
 
         if truck["stopped"]:
@@ -221,8 +226,8 @@ while True:
 
         else:
             truck["speed"] += random.uniform(
-                -truck["speed_variation"],
-                truck["speed_variation"]
+                -truck["speed_variation"] * 10,
+                truck["speed_variation"] * 10
             )
             truck["speed"] = max(15, min(75, truck["speed"]))
 
@@ -255,5 +260,5 @@ while True:
 
         print(truck)
 
-    print("-" * 40)   # separator between updates
+    print("-" * 40)
     time.sleep(3)

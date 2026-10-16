@@ -219,7 +219,7 @@ function App() {
           <p>No active alerts. All trucks are within their limits.</p>
         ) : (
           <div className="alerts-list">
-            {alerts.map((alert, index) => (
+            {alerts.map((alert) => (
               <div
                 className="alert-card"
                 key={`${alert.type}-${alert.vehicle_id}`}
