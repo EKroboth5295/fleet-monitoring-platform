@@ -232,7 +232,11 @@ while True:
             truck["speed"] = max(15, min(75, truck["speed"]))
 
             if random.random() < truck["turn_probability"]:
-                truck["heading"] += random.uniform(-10, 10)
+                truck["heading"] += random.uniform(-25, 25)
+                truck["heading"] %= 360
+
+            if random.random() < 0.01:
+                truck["heading"] += random.choice([-90, 90])
                 truck["heading"] %= 360
 
             meters = truck["speed"] * 0.44704 * dt
@@ -247,18 +251,31 @@ while True:
                 111320 * math.cos(math.radians(truck["lat"]))
             )
 
-            if truck["lat"] < MIN_LAT or truck["lat"] > MAX_LAT:
+            if truck["lat"] < MIN_LAT:
+                truck["lat"] = MIN_LAT
+                truck["heading"] = (180 - truck["heading"]) % 360
+            elif truck["lat"] > MAX_LAT:
+                truck["lat"] = MAX_LAT
                 truck["heading"] = (180 - truck["heading"]) % 360
 
-            if truck["lon"] < MIN_LON or truck["lon"] > MAX_LON:
+            if truck["lon"] < MIN_LON:
+                truck["lon"] = MIN_LON
+                truck["heading"] = (-truck["heading"]) % 360
+            elif truck["lon"] > MAX_LON:
+                truck["lon"] = MAX_LON
                 truck["heading"] = (-truck["heading"]) % 360
 
-        requests.post(
-            "http://127.0.0.1:8000/update",
-            json=truck
-        )
+        try:
+            response = requests.post(
+                "http://127.0.0.1:8000/update",
+                json=truck,
+                timeout=5
+            )
+            response.raise_for_status()
+            print(f"Updated vehicle {truck['id']}")
 
-        print(truck)
+        except requests.exceptions.RequestException as error:
+            print(f"Failed to update vehicle {truck['id']}: {error}")
 
     print("-" * 40)
     time.sleep(3)
