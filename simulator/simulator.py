@@ -239,6 +239,27 @@ while True:
                 truck["heading"] += random.choice([-90, 90])
                 truck["heading"] %= 360
 
+            LAT_MARGIN = 0.001
+            LON_MARGIN = 0.001
+
+            near_south = truck["lat"] < MIN_LAT + LAT_MARGIN
+            near_north = truck["lat"] > MAX_LAT - LAT_MARGIN
+            near_west = truck["lon"] < MIN_LON + LON_MARGIN
+            near_east = truck["lon"] > MAX_LON - LON_MARGIN
+
+            if near_south or near_north or near_west or near_east:
+                center_lat = (MIN_LAT + MAX_LAT) / 2
+                center_lon = (MIN_LON + MAX_LON) / 2
+
+                north = (center_lat - truck["lat"]) * 111320
+                east = (
+                    (center_lon - truck["lon"])
+                    * 111320
+                    * math.cos(math.radians(truck["lat"]))
+                )
+
+                truck["heading"] = math.degrees(math.atan2(east, north)) % 360
+
             meters = truck["speed"] * 0.44704 * dt
 
             heading = math.radians(truck["heading"])
