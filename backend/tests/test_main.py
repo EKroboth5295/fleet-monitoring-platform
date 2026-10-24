@@ -156,3 +156,28 @@ def test_get_alerts_geofence():
     assert alerts[0]["latitude"] == 40.820
     assert alerts[0]["longitude"] == -77.860
     assert "outside the permitted geofence" in alerts[0]["message"]
+
+def test_update_vehicle_invalid_payload():    
+    payload = {
+        "id": 1,
+        "lat": 40.8,
+        "lon": -77.86,
+        "speed": 45.0,
+    }
+
+    response = client.post("/update", json=payload)
+
+    assert response.status_code == 422
+
+def test_update_vehicle_invalid_latitude():
+    payload = {
+        "id": 1,
+        "lat": "not-a-number",
+        "lon": -77.86,
+        "speed": 45.0,
+        "heading": 90.0,
+    }
+
+    response = client.post("/update", json=payload)
+
+    assert response.status_code == 422
