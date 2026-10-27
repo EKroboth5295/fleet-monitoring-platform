@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
+from datetime import datetime
 
 from main import app
 
@@ -181,3 +182,34 @@ def test_update_vehicle_invalid_latitude():
     response = client.post("/update", json=payload)
 
     assert response.status_code == 422
+
+def test_get_fleet():
+    pool, cursor = mock_database(
+        fetchall_results=[
+            [
+                (1, 40.8, -77.86, 45.0, 90.0)
+            ],
+            [
+                (1, 40.8, -77.86, 45.0, datetime(2026, 1, 1, 12, 0, 0))
+            ]
+        ]
+    )
+
+    with patch("main.pool", pool):
+        response = client.get("/fleet")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["vehicles"] == [
+        {"id": 1, "lat": 40.8, "lon": -77.86, "speed": 45.0, "heading": 90.0}
+    ]
+
+    assert "1" in data["histories"]
+    assert len(data["histories"]["1"]) == 1
+    assert data["histories"]["1"][0]["lat"] == 40.8
+    assert data["histories"]["1"][0]["lon"] == -77.86
+    assert data["histories"]["1"][0]["speed"] == 45.0
+
+    assert cursor.execute.call_count == 2
