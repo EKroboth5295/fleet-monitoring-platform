@@ -1,0 +1,20 @@
+
+CREATE TABLE IF NOT EXISTS vehicles (
+    id INTEGER PRIMARY KEY,
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    speed DOUBLE PRECISION NOT NULL DEFAULT 0,
+    heading DOUBLE PRECISION NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS vehicle_history (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    vehicle_id INTEGER NOT NULL REFERENCES vehicles(id),
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    speed DOUBLE PRECISION NOT NULL,
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_vehicle_history_vehicle_timestamp
+    ON vehicle_history (vehicle_id, timestamp DESC);
