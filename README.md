@@ -27,7 +27,7 @@ A Python simulator generates vehicle updates, a FastAPI backend processes them, 
 | Database | PostgreSQL |
 | Database connectivity | Psycopg 3, psycopg-pool |
 | Frontend | React, TypeScript |
-| Mapping | Leaflet |
+| Mapping | Leaflet, React Leaflet |
 | Simulation | Python, Requests |
 | Testing | Pytest, FastAPI TestClient |
 
@@ -46,7 +46,7 @@ Python Vehicle Simulator
    Historical Records
 ```
 
-The simulator sends vehicle updates to the backend, which updates the current vehicle data and records history in PostgreSQL. The frontend communicates with the API to display vehicle locations and retrieve fleet information and alerts.
+The simulator sends vehicle updates to the backend, which updates current vehicle data and records historical positions in PostgreSQL. The frontend communicates with the API to display vehicle locations and retrieve fleet information and alerts.
 
 ## API Endpoints
 
@@ -59,9 +59,11 @@ The simulator sends vehicle updates to the backend, which updates the current ve
 | GET | `/fleet` | Retrieves current fleet data and recent vehicle histories. |
 | GET | `/alerts` | Retrieves operational alerts. |
 
+Interactive API documentation is available at `/docs` when the backend is running.
+
 ## Automated Testing
 
-The backend has an automated test suite covering the main API functionality, including:
+The backend test suite covers the main API functionality, including:
 
 - Vehicle retrieval and updates.
 - Unknown vehicle handling.
@@ -69,15 +71,15 @@ The backend has an automated test suite covering the main API functionality, inc
 - Missing or invalid request fields.
 - Fleet data and vehicle history responses.
 
-To run the tests, activate the project's virtual environment and run the following from the `backend` directory:
+Run the tests from the `backend` directory with the Python virtual environment activated:
 
 ```bash
 python -m pytest -v
 ```
 
-**Current result:** 11 tests passing.
+**Current result: 11 tests passing.**
 
-The tests use mocked database connections, so they verify API behavior without relying on a running PostgreSQL database. Testing against a live database is a separate integration check.
+The tests use mocked database connections to verify API behavior without requiring a running PostgreSQL database.
 
 ## Project Structure
 
@@ -85,8 +87,12 @@ The tests use mocked database connections, so they verify API behavior without r
 fleet-monitoring-platform/
 ├── backend/
 │   ├── main.py
+│   ├── seed.py
+│   ├── schema.sql
+│   ├── .env.example
 │   ├── requirements.txt
 │   └── tests/
+│       └── test_main.py
 ├── frontend/
 ├── simulator/
 ├── docs/
@@ -97,11 +103,12 @@ fleet-monitoring-platform/
 
 ### Prerequisites
 
-- Python
-- Node.js and npm
-- PostgreSQL
+- Python 3.8 or a compatible Python version for the pinned dependencies.
+- Node.js and npm.
+- PostgreSQL with the `psql` command-line tool available.
+- Git.
 
-The PostgreSQL database must be configured and initialized for the backend before running the complete application.
+The following instructions use Git Bash on Windows. Commands may differ on other operating systems.
 
 ### 1. Clone the repository
 
@@ -110,15 +117,9 @@ git clone https://github.com/EKroboth5295/fleet-monitoring-platform.git
 cd fleet-monitoring-platform
 ```
 
-### 2. Activate the Python virtual environment
+### 2. Create the Python environment
 
-From the repository root, run:
-
-```bash
-source backend/venv/Scripts/activate
-```
-
-If you are setting up the project from scratch and the virtual environment does not exist yet, create it and install the backend dependencies first:
+From the repository root:
 
 ```bash
 cd backend
@@ -128,50 +129,67 @@ python -m pip install -r requirements.txt
 cd ..
 ```
 
-Configure the PostgreSQL connection using the environment variables expected by the backend.
+### 3. Configure the database connection
 
-### 3. Start the application
-
-Run each component in a separate terminal from the repository root, unless otherwise specified.
-
-**Terminal 1 — Backend API**
-
-Activate the virtual environment, then run:
+Create your local environment file from the example:
 
 ```bash
+cp backend/.env.example backend/.env
+```
+
+Edit `backend/.env` with your PostgreSQL database name, username, password, host, and port. The example uses `fleet_monitoring` as the database name and `localhost:5432` as the connection address.
+
+**Do not commit your actual `.env` file or database password.**
+
+### 4. Create and initialize the database
+
+Create the database using your PostgreSQL account:
+
+```bash
+psql -U postgres -c "CREATE DATABASE fleet_monitoring;"
+```
+
+If the database already exists, skip the creation command.
+
+From the repository root, create the tables and index:
+
+```bash
+psql -U postgres -d fleet_monitoring -f backend/schema.sql
+```
+
+If you use a different PostgreSQL username or database name, adjust the commands accordingly.
+
+### 5. Seed the initial vehicles
+
+From the repository root:
+
+```bash
+cd backend
+source venv/Scripts/activate
+python seed.py
+cd ..
+```
+
+The seed script inserts 20 initial vehicles. Run it once against a newly initialized database; rerunning it will conflict with the existing vehicle IDs.
+
+### 6. Start the backend API
+
+Open a terminal at the repository root, activate the virtual environment, and start the backend:
+
+```bash
+source backend/venv/Scripts/activate
 cd backend
 uvicorn main:app --reload
 ```
 
-The API runs at `http://127.0.0.1:8000`. Interactive API documentation is available at `http://127.0.0.1:8000/docs`.
+The API runs at `http://127.0.0.1:8000`.
 
-**Terminal 2 — Vehicle simulator**
+Interactive API documentation is available at `http://127.0.0.1:8000/docs`.
 
-Activate the virtual environment, then run from the repository root:
+### 7. Start the vehicle simulator
 
-```bash
-python simulator/simulator.py
-```
-
-**Terminal 3 — Frontend**
-
-From the repository root, run:
+Open a second terminal at the repository root:
 
 ```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Use the local URL printed by the frontend development server to open the dashboard.
-
-## Future Improvements
-
-Potential improvements include live database integration tests, deployment, and further refinements to error handling and the dashboard.
-
-## Author
-
-**Evan Kroboth**
-
-- [LinkedIn](https://www.linkedin.com/in/evan-kroboth/)
-- [Portfolio](https://sites.psu.edu/ekroboth/)
+source backend/venv/Scripts/activate
+python simulator/simulator
