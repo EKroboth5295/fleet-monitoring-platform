@@ -79,7 +79,7 @@ python -m pytest -v
 
 **Current result: 11 tests passing.**
 
-The tests use mocked database connections to verify API behavior without requiring a running PostgreSQL database.
+The tests use mocked database connections to verify API behavior without requiring a running PostgreSQL database. Live database integration testing is a separate step.
 
 ## Project Structure
 
@@ -192,4 +192,30 @@ Open a second terminal at the repository root:
 
 ```bash
 source backend/venv/Scripts/activate
-python simulator/simulator
+python simulator/simulator.py
+```
+
+The simulator sends vehicle updates to the running backend.
+
+### 8. Start the frontend
+
+Open a third terminal at the repository root:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open the local URL printed by Vite to view the dashboard. Keep all three application processes running while using the system.
+
+## Future Improvements
+
+Potential improvements include live database integration tests, deployment, and further refinements to error handling and the dashboard.
+
+## Author
+
+**Evan Kroboth**
+
+- [LinkedIn](https://www.linkedin.com/in/evan-kroboth/)
+- [Portfolio](https://sites.psu.edu/ekroboth/)
