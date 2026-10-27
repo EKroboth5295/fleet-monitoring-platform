@@ -158,5 +158,5 @@ Potential future work includes deployment, additional integration testing, impro
 
 **Evan Kroboth**
 
-- [GitHub](https://github.com/EKroboth5295)
+- [LinkedIn](https://www.linkedin.com/in/evan-kroboth/)
 - [Portfolio](https://sites.psu.edu/ekroboth/)
