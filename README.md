@@ -79,7 +79,7 @@ python -m pytest -v
 
 **Current result: 11 tests passing.**
 
-The tests use mocked database connections to verify API behavior without requiring a running PostgreSQL database. Live database integration testing is a separate step.
+The tests use mocked database connections to verify API behavior without requiring a running PostgreSQL database.
 
 ## Project Structure
 
