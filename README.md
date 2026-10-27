@@ -1,23 +1,23 @@
 # Fleet Monitoring Platform
 
-A full-stack fleet monitoring application that simulates vehicle movement, visualizes fleet locations, tracks vehicle history, and identifies operational alerts.
+A full-stack fleet monitoring application that simulates vehicle movement, displays vehicle locations on an interactive map, stores location history, and generates operational alerts.
 
 ## Overview
 
-The Fleet Monitoring Platform is a software project designed to demonstrate how vehicle telemetry can be collected, processed, stored, and displayed through a web-based dashboard.
+I built this project to explore how vehicle telemetry can be collected, stored, and displayed in a fleet monitoring system.
 
-A Python simulator generates vehicle updates, a FastAPI backend processes the data, and PostgreSQL stores current vehicle information and historical records. The frontend presents fleet information on an interactive map and provides access to monitoring and alert data.
+A Python simulator generates vehicle updates, a FastAPI backend processes them, and PostgreSQL stores current vehicle data and historical records. The React frontend uses Leaflet to display vehicle locations and provides a dashboard for monitoring the fleet.
 
 ## Features
 
-- **Vehicle tracking:** View vehicle locations, speeds, and headings.
+- **Vehicle tracking:** Display vehicle locations, speeds, and headings.
 - **Interactive map:** Visualize vehicle positions using React and Leaflet.
-- **Simulated telemetry:** Generate continuous vehicle updates through a Python simulator.
-- **Vehicle history:** Store and retrieve historical location and speed records.
-- **Fleet overview:** Retrieve current vehicle information and associated history through a single API endpoint.
-- **Operational alerts:** Identify overspeeding, prolonged stops, and geofence violations.
-- **REST API:** Provide endpoints for vehicle updates, fleet data, history, and alerts.
-- **Automated tests:** Test API responses, vehicle updates, alert behavior, and invalid input.
+- **Vehicle simulation:** Generate continuous vehicle updates with a Python simulator.
+- **Historical tracking:** Store and retrieve previous vehicle locations and speeds.
+- **Fleet overview:** Retrieve current vehicle data and recent history through a single API endpoint.
+- **Operational alerts:** Detect overspeeding, prolonged stops, and geofence violations.
+- **REST API:** Handle vehicle updates and provide access to fleet data, history, and alerts.
+- **Automated testing:** Test API endpoints, alert behavior, vehicle updates, and invalid input.
 
 ## Technology Stack
 
@@ -36,24 +36,17 @@ A Python simulator generates vehicle updates, a FastAPI backend processes the da
 ```text
 Python Vehicle Simulator
           |
-          | Vehicle telemetry
+          | Vehicle updates
           v
-     FastAPI Backend
-          |
-          v
-      PostgreSQL
-   Current Vehicle Data
-    Historical Records
-          |
-          v
-      React Frontend
-     + Leaflet Map
-          |
-          v
-  Fleet Monitoring Dashboard
+     FastAPI Backend <------> React Frontend
+          |                       |
+          v                       v
+      PostgreSQL             Leaflet Map
+   Current Vehicle Data      Fleet Dashboard
+   Historical Records
 ```
 
-The simulator generates vehicle updates and sends them to the backend. The backend validates incoming data, updates the database, and records vehicle history. The frontend retrieves fleet information and displays it for monitoring.
+The simulator sends vehicle updates to the backend, which updates the current vehicle data and records history in PostgreSQL. The frontend communicates with the API to display vehicle locations and retrieve fleet information and alerts.
 
 ## API Endpoints
 
@@ -62,23 +55,21 @@ The simulator generates vehicle updates and sends them to the backend. The backe
 | GET | `/` | Returns an API status message. |
 | GET | `/vehicles` | Retrieves current vehicle data. |
 | POST | `/update` | Processes a vehicle telemetry update. |
-| GET | `/history/{vehicle_id}` | Retrieves historical records for a vehicle. |
+| GET | `/history/{vehicle_id}` | Retrieves history for a specific vehicle. |
 | GET | `/fleet` | Retrieves current fleet data and recent vehicle histories. |
-| GET | `/alerts` | Retrieves detected operational alerts. |
+| GET | `/alerts` | Retrieves operational alerts. |
 
 ## Automated Testing
 
-The backend includes an automated test suite covering the primary API functionality.
+The backend has an automated test suite covering the main API functionality, including:
 
-Current test coverage includes:
-
-- API root response and vehicle retrieval.
-- Successful and unsuccessful vehicle updates.
+- Vehicle retrieval and updates.
+- Unknown vehicle handling.
 - Overspeed, prolonged-stop, and geofence alerts.
-- Validation of missing and invalid request fields.
+- Missing or invalid request fields.
 - Fleet data and vehicle history responses.
 
-Run the tests from the `backend` directory with the project virtual environment activated:
+To run the tests, activate the project's virtual environment and run the following from the `backend` directory:
 
 ```bash
 python -m pytest -v
@@ -86,7 +77,7 @@ python -m pytest -v
 
 **Current result:** 11 tests passing.
 
-The current automated tests use mocked database connections. Testing against a live PostgreSQL database is a separate integration verification step.
+The tests use mocked database connections, so they verify API behavior without relying on a running PostgreSQL database. Testing against a live database is a separate integration check.
 
 ## Project Structure
 
@@ -104,7 +95,13 @@ fleet-monitoring-platform/
 
 ## Local Setup
 
-The application requires Python, Node.js/npm, and PostgreSQL. Each component must be configured before the complete application can run.
+### Prerequisites
+
+- Python
+- Node.js and npm
+- PostgreSQL
+
+The PostgreSQL database must be configured and initialized for the backend before running the complete application.
 
 ### 1. Clone the repository
 
@@ -113,46 +110,64 @@ git clone https://github.com/EKroboth5295/fleet-monitoring-platform.git
 cd fleet-monitoring-platform
 ```
 
-### 2. Set up the backend
+### 2. Activate the Python virtual environment
+
+From the repository root, run:
+
+```bash
+source backend/venv/Scripts/activate
+```
+
+If you are setting up the project from scratch and the virtual environment does not exist yet, create it and install the backend dependencies first:
 
 ```bash
 cd backend
 python -m venv venv
-```
-
-Activate the virtual environment on Windows Git Bash:
-
-```bash
 source venv/Scripts/activate
-```
-
-Install the backend dependencies:
-
-```bash
 python -m pip install -r requirements.txt
+cd ..
 ```
 
-Configure the PostgreSQL connection using the environment variables expected by the backend. Ensure the database and required tables are initialized before starting the application.
+Configure the PostgreSQL connection using the environment variables expected by the backend.
 
-Start the API from the `backend` directory:
+### 3. Start the application
+
+Run each component in a separate terminal from the repository root, unless otherwise specified.
+
+**Terminal 1 — Backend API**
+
+Activate the virtual environment, then run:
 
 ```bash
+cd backend
 uvicorn main:app --reload
 ```
 
-The API should be available at `http://127.0.0.1:8000`. FastAPI's interactive API documentation is available at `http://127.0.0.1:8000/docs`.
+The API runs at `http://127.0.0.1:8000`. Interactive API documentation is available at `http://127.0.0.1:8000/docs`.
 
-### 3. Set up the frontend and simulator
+**Terminal 2 — Vehicle simulator**
 
-Install the frontend dependencies using the frontend project's package configuration, then start the development server using its configured script.
+Activate the virtual environment, then run from the repository root:
 
-Configure the simulator to send vehicle updates to the running backend, then start the simulator from its project directory.
+```bash
+python simulator/simulator.py
+```
 
-Refer to the frontend and simulator configuration files for their exact startup commands and required settings.
+**Terminal 3 — Frontend**
+
+From the repository root, run:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Use the local URL printed by the frontend development server to open the dashboard.
 
 ## Future Improvements
 
-Potential future work includes deployment, additional integration testing, improved error handling, and further enhancements to the fleet dashboard.
+Potential improvements include live database integration tests, deployment, and further refinements to error handling and the dashboard.
 
 ## Author
 
