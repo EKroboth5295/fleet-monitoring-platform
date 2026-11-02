@@ -12,7 +12,7 @@ A Python simulator generates vehicle updates, a FastAPI backend processes them, 
 
 - **Vehicle tracking:** Display vehicle locations, speeds, and headings.
 - **Interactive map:** Visualize vehicle positions using React and Leaflet.
-- **Vehicle simulation:** Generate continuous vehicle updates with a Python simulator.
+- **Vehicle simulation:** Generates movement, heading changes, randomized stops, and boundary reflection turns for 20 vehicles within a Penn State geographic bounding box.
 - **Historical tracking:** Store and retrieve previous vehicle locations and speeds.
 - **Fleet overview:** Retrieve current vehicle data and recent history through a single API endpoint.
 - **Operational alerts:** Detect overspeeding, prolonged stops, and geofence violations.
